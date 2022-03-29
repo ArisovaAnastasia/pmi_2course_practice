@@ -14,6 +14,7 @@ private:
         for (size_t index = 0; index <= size_; ++index) {
             new_data[index] = data_[index];
         }
+        delete [] data_;
         data_ = new_data;
         capacity_ = new_capacity;
     }
@@ -22,40 +23,50 @@ public:
     Vector() : size_(0), capacity_(0), data_(new int[capacity_]) {
     }
 
-    Vector(size_t size) : data_(new int[capacity_]) {
-        for (size_t index = 0; index <= size_; ++index) {
-            data_[index++] = 0;
+    Vector(size_t size): size_(size), capacity_(size), data_(new int[capacity_]) {
+        for (size_t index = 0; index < size_; ++index) {
+            data_[index] = 0;
         }
     }
 
-    Vector(std::initializer_list<int> list) : data_(new int[capacity_]) {
+    Vector(std::initializer_list<int> list): size_(list.size()), capacity_(size_), data_(new int[list.size()]) {
         size_t count = 0;
         for (auto value : list) {
-            data_[++count] = value;
+            data_[count++] = value;
         }
     }
 
-    Vector(const Vector& vector) : size_(vector.size_), capacity_(vector.capacity_), data_(vector.data_) {
+    Vector(const Vector& vector) : size_(vector.size_), capacity_(vector.capacity_) {
+        data_ = new int[capacity_];
+        for (size_t index = 0; index < size_; ++index)
+            data_[index] = vector.data_[index];
     }
 
     Vector& operator=(const Vector& vector) {
         size_ = vector.size_;
-        data_ = new int[size_];
-        for (size_t index = 0; index <= size_; ++index) {
+        capacity_ = vector.capacity_;
+        delete [] data_;
+        data_ = new int[capacity_];
+
+        for (size_t index = 0; index < size_; ++index) {
             data_[index] = vector.data_[index];
         }
+
         return *this;
     }
 
     ~Vector() {
-        size_ = 0;
+        delete [] data_; 
+        size_ = capacity_ = 0;
     }
 
     void Swap(Vector& vector) {
+        std::swap(size_, vector.size_);
+        std::swap(capacity_, vector.capacity_);
         std::swap(data_, vector.data_);
     }
 
-    int operator[](size_t index) const {
+    const int& operator[](size_t index) const {
         return data_[index];
     }
 
@@ -72,6 +83,11 @@ public:
     }
 
     void PushBack(int value) {
+        if (capacity_ == 0)
+            Reallocate(1);
+        else if (size_ == capacity_)
+            Reallocate(capacity_*2);
+
         data_[size_++] = value;
     }
 
@@ -81,7 +97,6 @@ public:
 
     void Clear() {
         size_ = 0;
-        capacity_ = 0;
     }
 
     void Reserve(size_t new_capacity) {
